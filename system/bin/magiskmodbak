@@ -1,0 +1,167 @@
+#!/system/bin/sh
+
+scriptInfo="Magisk Module Backuper \n
+  Author: cjybyjk @ coolapk
+  License: GPL v3+
+  这个脚本可以帮助你备份并打包已安装的Magisk模块
+"
+
+echo "  正在初始化"
+source /data/adb/magisk/util_functions.sh
+theModID="moduleBackuper"
+tmpDir="/dev/mmb_tmp"
+
+if [ ! $BOOTMODE ]; then
+  mkdir -p $MOUNTPATH
+  mount $IMG $MOUNTPATH
+fi
+ 
+ESCAPE_CHAR=$'\033'
+menuStr=""
+ 
+# 清屏操作
+clearLastMenu(){
+  local msgLineCount=$(printf "$menuStr" | wc -l)
+  echo -en "$ESCAPE_CHAR[${msgLineCount}A"
+  printf "${ESCAPE_CHAR}c"
+}
+ 
+# 用于打印列表
+renderMenu(){
+  local instruction="$1"
+  local selectedIndex=$2
+  local selector=""
+ 
+  menuStr="\n $instruction\n" 
+  for i in `seq 0 $listLength` ; do
+    local currItem="${menuItems[i]}"
+    
+    if [[ $i = $selectedIndex ]]; then 
+      selector=">"
+      selectedItem="$currItem"
+    else
+      selector=" "
+    fi
+ 
+    menuStr="$menuStr\n $selector ${currItem}"
+  done
+ 
+  clearLastMenu
+  printf "$menuStr\n"
+}
+ 
+selectionMenu(){
+  # 按键设置
+  local KEY_ARROW_UP=$(echo -e "$ESCAPE_CHAR[A")
+  local KEY_ARROW_DOWN=$(echo -e "$ESCAPE_CHAR[B")
+  local KEY_ENTER=$(echo -e "\n")
+  # 读取参数
+  local instruction=$1
+  # 取得模块列表
+  modNum=0
+  for module in `ls -1 $MOUNTPATH | grep -v 'lost+found';`
+  do
+    modname=`cat $MOUNTPATH/$module/module.prop | grep '^name' | awk -F'=' '{ print $2 }' `
+    menuItems[$modNum]="$module <$modname>"
+    ((modNum++))
+  done
+  local listLength=${#menuItems[@]}
+  local selectedIndex=${3:-0}
+  local flagLoop=${4:-false}
+  # 等待选择
+  local flagWaitingEnter=true
+  
+  # 没有提供列表项
+  if [[ $listLength -lt 1 ]]; then
+    printf "错误: 未提供列表\n"
+    return 1
+  fi
+ 
+  renderMenu "$instruction" $selectedIndex
+ 
+  while $flagWaitingEnter; do
+    
+    read -rsn3 inpKey # `3` 代表 escape (\033'), bracket ([) 和 ASCII 控制字符
+ 
+    case "$inpKey" in
+      "$KEY_ARROW_UP")
+        selectedIndex=$((selectedIndex-1))
+        (( $selectedIndex < 0 )) && selectedIndex=0 && $flagLoop && selectedIndex=$((listLength-1))
+        ;;
+ 
+      "$KEY_ARROW_DOWN")
+        selectedIndex=$((selectedIndex+1))
+        (( $selectedIndex == $listLength )) && selectedIndex=$((listLength-1)) && $flagLoop && selectedIndex=0 
+        ;;
+        
+      "$KEY_ENTER")
+        flagWaitingEnter=false
+        return 0
+        ;;
+    esac
+    
+    renderMenu "$instruction" $selectedIndex
+  done
+}
+
+exxit() {
+  if [ ! $BOOTMODE ]; then
+    mount $IMG $MOUNTPATH
+  fi
+  exit 0
+}
+
+# 取得权限并生成字符串
+# $1:path/2/file $2:file/on/module
+get_perm() {
+  tmpPerm=`stat $1 | grep 'Access: (' | awk -F '(' '{print \$2}' | awk -F '/' '{print \$1}' `
+  echo "chmod $tmpPerm $2"
+}
+
+# $1:path $2:root
+ls_cp_path_perm() {
+  for node in `ls $1`
+    do  
+      dir_or_file=$1/$node
+      get_perm "$dir_or_file" "\$MODPATH/$dir_or_file" >> $tmpDir/config.sh
+      if [ ! -L $dir_or_file ]; then
+        if [ -d $dir_or_file ]; then
+          mkdir -p $2/$dir_or_file
+          ls_cp_path_perm $dir_or_file $2
+        else
+          cp $dir_or_file $2/$dir_or_file
+        fi
+      fi
+  done
+}
+
+bak_start() {
+  selectionMenu "$scriptInfo \n  请选择一个模块 \n  按 [CTRL]+C 退出 \n" 
+  modID=${selectedItem%% <*}
+  
+  echo "  输入保存路径，默认为 $PWD/modbak-$modID.zip ："
+  read savePath
+  [ "" == "$savePath" ] && savePath="$PWD/modbak-$modID.zip"
+  
+  echo "  开始备份 $modID"
+  mkdir -p $tmpDir
+  cp -r $MOUNTPATH/$theModID/magisk-template/* $tmpDir
+  cp $MOUNTPATH/$modID/module.prop $tmpDir/module.prop
+  cd $MOUNTPATH/$modID
+  mkdir $tmpDir/modbaks/
+  ls_cp_path_perm "." "$tmpDir/modbaks/"
+  echo "}" >> $tmpDir/config.sh
+  cd $tmpDir
+  rm ./modbaks/disabled
+  zip -r $savePath ./*
+  rm -rf $tmpDir
+  
+  echo "  $modID 备份完成"
+  echo "  你还想继续进行其他操作吗? (Y/n)"
+  read Ans
+  echo $Ans | grep -iq n && exxit || bak_start
+}
+
+trap 'exxit' INT
+
+bak_start

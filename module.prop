@@ -1,0 +1,7 @@
+id=moduleBackuper
+name=Magisk Module Backuper
+version=v1
+versionCode=1
+author=cjybyjk @ coolapk
+description=这个脚本可以帮助你备份并打包已安装的Magisk模块
+minMagisk=17000
