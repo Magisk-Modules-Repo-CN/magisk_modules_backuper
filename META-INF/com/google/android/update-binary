@@ -82,7 +82,7 @@ MIN_VER=`grep_prop minMagisk $INSTALLER/module.prop`
 [ ! -z $MAGISK_VER_CODE -a $MAGISK_VER_CODE -ge $MIN_VER ] || require_new_magisk
 MODID=`grep_prop id $INSTALLER/module.prop`
 MODPATH=$MOUNTPATH/$MODID
-MODNAME=`grep_prop name $INSTALLER/module.prop`
+
 
 # 打印模块名称
 print_modname
