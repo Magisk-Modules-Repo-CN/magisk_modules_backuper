@@ -23,7 +23,7 @@
 
 # 如果您需要启用 Magic Mount, 请把它设置为 true
 # 大多数模块都需要启用它
-AUTOMOUNT=true
+AUTOMOUNT=false
 
 # 如果您需要加载 system.prop, 请把它设置为 true
 PROPFILE=false
