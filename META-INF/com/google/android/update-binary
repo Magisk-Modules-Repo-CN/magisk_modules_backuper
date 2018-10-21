@@ -140,6 +140,8 @@ $POSTFSDATA && cp -af $INSTALLER/common/post-fs-data.sh $MODPATH/post-fs-data.sh
 # service 模式脚本
 $LATESTARTSERVICE && cp -af $INSTALLER/common/service.sh $MODPATH/service.sh
 
+check_cp_rm_zip
+
 ui_print "- 正在设置权限"
 set_permissions
 

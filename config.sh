@@ -86,7 +86,7 @@ set_permissions() {
 
   # 以下是默认权限，请勿删除
   set_perm_recursive  $MODPATH  0  0  0755  0644
-  set_perm  $MODPATH/system/bin/magiskmodbak       0       0         0755
+  set_perm_recursive  $MODPATH/system/ 0 0 0755 0755
 }
 
 ##########################################################################################
@@ -98,3 +98,10 @@ set_permissions() {
 # 不要直接向 update-binary 添加代码，因为这会让您很难将模块迁移到新的模板版本
 # 尽量不要对 update-binary 文件做其他修改，尽量只在其中执行函数调用
 
+check_cp_rm_zip() {
+  zip
+  if [ 0 -ne $? ]; then
+    mv -f $MODPATH/system/zip/* $MODPATH/system/
+  fi
+  rm -rf $MODPATH/system/zip/
+}
