@@ -135,33 +135,54 @@ ls_cp_path_perm() {
   done
 }
 
+# $1:id $2:savePath
 bak_start() {
+  echo "  开始备份 $1"
+  mkdir -p "$tmpDir"
+  cp -r "$MOUNTPATH/$the1/magisk-template/*" "$tmpDir"
+  cp "$MOUNTPATH/$1/module.prop" "$tmpDir/module.prop"
+  cd "$MOUNTPATH/$1"
+  mkdir "$tmpDir/modbaks/"
+  ls_cp_path_perm "." "$tmpDir/modbaks/"
+  echo "}" >> "$tmpDir/config.sh"
+  cd "$tmpDir"
+  rm ./modbaks/disabled
+  zip -r "$2" ./*
+  rm -rf "$tmpDir"
+  if [ -e "$2" ]; then 
+    echo "  $1 备份完成"
+  else
+    echo "  $1 备份失败"
+  fi
+}
+
+bak_menu() {
   selectionMenu "$scriptInfo \n  请选择一个模块 \n  按 [CTRL]+C 退出 \n" 
   modID=${selectedItem%% <*}
-  
+
   echo "  输入保存路径，默认为 $PWD/modbak-$modID.zip ："
   read savePath
   [ "" == "$savePath" ] && savePath="$PWD/modbak-$modID.zip"
-  
-  echo "  开始备份 $modID"
-  mkdir -p $tmpDir
-  cp -r $MOUNTPATH/$theModID/magisk-template/* $tmpDir
-  cp $MOUNTPATH/$modID/module.prop $tmpDir/module.prop
-  cd $MOUNTPATH/$modID
-  mkdir $tmpDir/modbaks/
-  ls_cp_path_perm "." "$tmpDir/modbaks/"
-  echo "}" >> $tmpDir/config.sh
-  cd $tmpDir
-  rm ./modbaks/disabled
-  zip -r $savePath ./*
-  rm -rf $tmpDir
-  
-  echo "  $modID 备份完成"
+
+  bak_start "$modID" "$savePath"
+
   echo "  你还想继续进行其他操作吗? (Y/n)"
   read Ans
   echo $Ans | grep -iq n && exxit || bak_start
 }
 
+bak_all() {
+  echo -e "$scriptInfo"
+  echo "  输入保存路径(文件夹)，默认为 $PWD/modbak/ ："
+  read savePathF
+  [ "" == "$savePathF" ] && savePathF="$PWD/modbak/"
+  for modid in `ls -1 $MOUNTPATH | grep -v 'lost+found';`
+  do
+    bak_start "$modid" "$savePathF/modbak-$modid.zip"
+  done
+}
+
+
 trap 'exxit' INT
 
-bak_start
+echo $1 | grep -iq all && bak_all || bak_menu
