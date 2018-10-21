@@ -139,7 +139,7 @@ ls_cp_path_perm() {
 bak_start() {
   echo "  开始备份 $1"
   mkdir -p "$tmpDir"
-  cp -r "$MOUNTPATH/$the1/magisk-template/*" "$tmpDir"
+  cp -r $MOUNTPATH/$theModID/magisk-template/* "$tmpDir/"
   cp "$MOUNTPATH/$1/module.prop" "$tmpDir/module.prop"
   cd "$MOUNTPATH/$1"
   mkdir "$tmpDir/modbaks/"
@@ -176,9 +176,10 @@ bak_all() {
   echo "  输入保存路径(文件夹)，默认为 $PWD/modbak/ ："
   read savePathF
   [ "" == "$savePathF" ] && savePathF="$PWD/modbak/"
+  mkdir -p "$savePathF"
   for modid in `ls -1 $MOUNTPATH | grep -v 'lost+found';`
   do
-    bak_start "$modid" "$savePathF/modbak-$modid.zip"
+    bak_start $modid "${savePathF}/modbak-$modid.zip"
   done
 }
 
