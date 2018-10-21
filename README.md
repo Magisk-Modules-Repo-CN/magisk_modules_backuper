@@ -3,3 +3,4 @@
 
 ## 用法
 - 在终端模拟器中 **以root权限** 执行 ` magiskmodbak `
+- 如果想备份所有模块，请 **以root权限** 执行 ` magiskmodbak all `
