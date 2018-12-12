@@ -12,8 +12,12 @@ theModID="moduleBackuper"
 tmpDir="/dev/mmb_tmp"
 
 if [ ! $BOOTMODE ]; then
+  MOUNTPATH=/dev/tmp/magisk
   mkdir -p $MOUNTPATH
   mount $IMG $MOUNTPATH
+else
+  MOUNTPATH=/sbin/.magisk/img
+  [ ! -d $MOUNTPATH ] && MOUNTPATH=/sbin/.core/img
 fi
  
 ESCAPE_CHAR=$'\033'
