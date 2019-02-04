@@ -151,7 +151,7 @@ bak_start() {
   echo "}" >> "$tmpDir/config.sh"
   cd "$tmpDir"
   rm ./modbaks/disabled
-  zip -r "$2" ./*
+  7za a "$2" ./*
   rm -rf "$tmpDir"
   if [ -e "$2" ]; then 
     echo "  $1 备份完成"

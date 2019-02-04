@@ -87,6 +87,7 @@ set_permissions() {
   # 以下是默认权限，请勿删除
   set_perm_recursive  $MODPATH  0  0  0755  0644
   set_perm  $MODPATH/system/bin/magiskmodbak       0       0         0755
+  set_perm  $MODPATH/system/bin/7za       0       0         0755
 }
 
 ##########################################################################################
